@@ -1,0 +1,35 @@
+name: push to pages repo
+on: push
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: pnpm
+      - id: cache-node_modules
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-18-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Install and Build 🔧
+        env:
+          CACHE_HIT: ${{ steps.cache-node_modules.outputs.cache-hit }}
+        run: |
+          $CACHE_HIT && pnpm i --frozen-lockfile
+          pnpm build
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          token: ${{ secrets.PAGES_TOKEN }}
+          repository-name: qijizh/qijizh.github.io
+          branch: pages
+          target-folder: blog
+          git-config-name: github-pages-deploy-action[bot]
+          git-config-email: 59334350+qijizh@users.noreply.github.com
